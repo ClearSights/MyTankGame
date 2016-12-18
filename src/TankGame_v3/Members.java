@@ -11,19 +11,21 @@ class Tank {
     public static final int DIR_DOWN = 1;
     public static final int DIR_LEFT = 2;
     public static final int DIR_RIGHT = 3;
-    public static final int MAX_BOMB_NUM = 5;
 
-    private int x = 0;      // x of center
-    private int y = 0;      // y of center
-    private int speed = 5;
-    private int direction;
-    private Color color;
+    public static final int MAX_BOMB_NUM = 5;
+    public static final int WIDTH = 24;
+    public static final int HEIGHT = 36;
+
+    int x = 0;      // x of center
+    int y = 0;      // y of center
+    int speed = 2;
+    int direction;
+    Color color;
 
     public boolean isAlive = true;
     public Vector<Bomb> bombs = new Vector<>();
 
     public Tank(int x, int y) {
-        // set tank defaults
         this.x = x;
         this.y = y;
         direction = DIR_UP;     // default direction
@@ -124,12 +126,75 @@ class HeroTank extends Tank {
     }
 }
 
-class EnemyTank extends Tank {
+class EnemyTank extends Tank implements Runnable {
+    private int MARCH_COUNT = 5;    // number of continuous march sequence
+    private int MARCH_INTERVAL = 150;    // interval of consequent marches
+
     public EnemyTank(int x, int y) {
         super(x, y);
 
         setColor(Color.YELLOW);
         setDirection(Tank.DIR_DOWN);
+    }
+
+    @Override
+    public void run() {
+        while (isAlive) {
+            // move
+            switch (getDirection()) {
+                case Tank.DIR_UP:
+                    for (int i = 0; i < MARCH_COUNT; i++) {
+                        if (y >= 15) {
+                            y -= speed;
+                        }
+                        try {
+                            Thread.sleep(MARCH_INTERVAL);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case Tank.DIR_DOWN:
+                    for (int i = 0; i < MARCH_COUNT; i++) {
+                        if (y + 15 < MainFrame.W_HEIGHT) {
+                            y += speed;
+                        }
+                        try {
+                            Thread.sleep(MARCH_INTERVAL);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case Tank.DIR_LEFT:
+                    for (int i = 0; i < MARCH_COUNT; i++) {
+                        if (x > 15) {
+                            x -= speed;
+                        }
+                        try {
+                            Thread.sleep(MARCH_INTERVAL);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case Tank.DIR_RIGHT:
+                    for (int i = 0; i < MARCH_COUNT; i++) {
+                        if (x + 15 < MainFrame.W_WIDTH) {
+                            x += speed;
+                        }
+                        try {
+                            Thread.sleep(MARCH_INTERVAL);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+            }
+
+            // change direction
+            direction = (int)(4 * Math.random());
+        }
     }
 }
 
@@ -143,7 +208,6 @@ class Bomb implements Runnable {
     private int y;
     private int speed = 8;
     private Color color;
-
     private int direction;
 
     public boolean isAlive = false;
@@ -185,7 +249,7 @@ class Bomb implements Runnable {
             }
 
             // judge whether alive
-            if (x < 0 | x > MainFrame.width | y < 0 | y > MainFrame.height) {
+            if (x < 0 | x > MainFrame.W_WIDTH | y < 0 | y > MainFrame.W_HEIGHT) {
                 isAlive = false;
                 break;
             }
