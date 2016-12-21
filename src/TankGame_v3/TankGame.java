@@ -13,6 +13,7 @@ import java.util.Vector;
  * 2. hero tank can shoot multiple bombs
  * 3. when bombs hit enemy tanks, they disappear together
  * 4. enemy tanks can move randomly within the boundary
+ * 5. enemy tanks can shoot bombs, heroTank hit by enemyBomb will die
  */
 public class TankGame {
     public static void main(String[] args) {
@@ -70,12 +71,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
     public void paint(Graphics g) {
         super.paint(g);
 
-        // background settings
+        // background
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, MainFrame.W_WIDTH, MainFrame.W_HEIGHT);
 
-        // draw tanks
-        drawTank(heroTank, g);
+        // draw living tanks
+        if (heroTank.isAlive) {
+            drawTank(heroTank, g);
+        }
         for (int i = 0; i < enemyTanks.size(); i++) {
             EnemyTank enemyTank = enemyTanks.get(i);
             if (enemyTank.isAlive) {
@@ -83,12 +86,24 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
             }
         }
 
-        // draw bombs of heroTank
+        // draw living bombs of heroTank
         g.setColor(heroTank.getColor());
         for (int i = 0; i < heroTank.bombs.size(); i++) {
             Bomb thisBomb = heroTank.bombs.get(i);
             if (thisBomb.isAlive) {
                 g.drawRect(thisBomb.getX(), thisBomb.getY(), 1, 1);
+            }
+        }
+
+        // draw living bombs of enemy tank
+        for (int i = 0; i < enemyTanks.size(); i++) {
+            EnemyTank enemyTank = enemyTanks.get(i);
+            g.setColor(enemyTank.getColor());
+            for (int j = 0; j < enemyTank.bombs.size(); j++) {
+                Bomb thisBomb = enemyTank.bombs.get(j);
+                if (thisBomb.isAlive) {
+                    g.drawRect(thisBomb.getX(), thisBomb.getY(), 1, 1);
+                }
             }
         }
     }
@@ -133,29 +148,32 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
         }
     }
 
-    // judge if an enemy is hit by a bomb
-    private void updateLivingInfo(Tank enemyTank, Bomb bomb) {
-        switch (enemyTank.getDirection()) {
-            case Tank.DIR_UP:
-            case Tank.DIR_DOWN:
-                if (bomb.getX()-enemyTank.getX() < Tank.WIDTH/2
-                        && bomb.getX()-enemyTank.getX() > -Tank.WIDTH/2
-                        && bomb.getY()-enemyTank.getY() < Tank.HEIGHT/2
-                        && bomb.getY()-enemyTank.getY() > -Tank.HEIGHT/2) {
-                    bomb.isAlive = false;
-                    enemyTank.isAlive = false;
-                }
-                break;
-            case Tank.DIR_LEFT:
-            case Tank.DIR_RIGHT:
-                if (bomb.getX()-enemyTank.getX() < Tank.HEIGHT/2
-                        && bomb.getX()-enemyTank.getX() > -Tank.HEIGHT/2
-                        && bomb.getY()-enemyTank.getY() < Tank.WIDTH/2
-                        && bomb.getY()-enemyTank.getY() > -Tank.WIDTH/2) {
-                    bomb.isAlive = false;
-                    enemyTank.isAlive = false;
-                }
-                break;
+    // check if a tank is hit by a bomb of enemy
+    private void checkHit(Tank tank, Bomb bomb) {
+        if (tank.isAlive && bomb.isAlive) {
+            // check if heroTank's bomb hit enemy tanks
+            switch (tank.getDirection()) {
+                case Tank.DIR_UP:
+                case Tank.DIR_DOWN:
+                    if (bomb.getX()-tank.getX() < Tank.WIDTH/2
+                            && bomb.getX()-tank.getX() > -Tank.WIDTH/2
+                            && bomb.getY()-tank.getY() < Tank.HEIGHT/2
+                            && bomb.getY()-tank.getY() > -Tank.HEIGHT/2) {
+                        bomb.isAlive = false;
+                        tank.isAlive = false;
+                    }
+                    break;
+                case Tank.DIR_LEFT:
+                case Tank.DIR_RIGHT:
+                    if (bomb.getX()-tank.getX() < Tank.HEIGHT/2
+                            && bomb.getX()-tank.getX() > -Tank.HEIGHT/2
+                            && bomb.getY()-tank.getY() < Tank.WIDTH/2
+                            && bomb.getY()-tank.getY() > -Tank.WIDTH/2) {
+                        bomb.isAlive = false;
+                        tank.isAlive = false;
+                    }
+                    break;
+            }
         }
     }
 
@@ -193,6 +211,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
 
         // press J, shoot bomb
         if (e.getKeyCode() == KeyEvent.VK_J) {
+            // hero tank shoot bomb
             if (heroTank.bombs.size() < Tank.MAX_BOMB_NUM) {
                 Bomb thisBomb = heroTank.shoot();
                 Thread bombThread = new Thread(thisBomb);
@@ -209,6 +228,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
     }
 
     @Override
+    // check hits, remove dead objects and update display
     public void run() {
         while (true) {
             try {
@@ -217,32 +237,45 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
                 e.printStackTrace();
             }
 
-            // update living info of bombs and enemy tanks
+            // check if bombs of heroTank hit enemyTank
             for (int i = 0; i < enemyTanks.size(); i++) {
                 EnemyTank enemyTank = enemyTanks.get(i);
 
                 if (enemyTank.isAlive) {
                     for (int j = 0; j < heroTank.bombs.size(); j++) {
-                        Bomb thisBomb = heroTank.bombs.get(j);
+                        Bomb heroBomb = heroTank.bombs.get(j);
 
-                        if (thisBomb.isAlive) {
-                            updateLivingInfo(enemyTank, thisBomb);
+                        if (heroBomb.isAlive) {
+                            checkHit(enemyTank, heroBomb);
+                        }
+
+                        // remove dead heroBomb and enemyTank
+                        if (!heroBomb.isAlive) {
+                            heroTank.bombs.remove(heroBomb);
+                        }
+                        if (!enemyTank.isAlive) {
+                            enemyTanks.remove(enemyTank);
                         }
                     }
                 }
             }
 
-            // find and remove those dead
-            for (int i = 0; i < enemyTanks.size(); i++) {
-                EnemyTank et = enemyTanks.get(i);
-                if (!et.isAlive) {
-                    enemyTanks.remove(et);
-                }
-            }
-            for (int i = 0; i < heroTank.bombs.size(); i++) {
-                Bomb thisBomb = heroTank.bombs.get(i);
-                if (!thisBomb.isAlive) {
-                    heroTank.bombs.remove(thisBomb);
+            // check if bombs of enemyTank hit heroTank
+            if (heroTank.isAlive) {
+                for (int i = 0; i < enemyTanks.size(); i++) {
+                    EnemyTank enemyTank = enemyTanks.get(i);
+                    for (int j = 0; j < enemyTank.bombs.size(); j++) {
+                        Bomb enemyBomb = enemyTank.bombs.get(j);
+
+                        if (enemyBomb.isAlive) {
+                            checkHit(heroTank, enemyBomb);
+                        }
+
+                        // remove dead enemy bombs
+                        if (!enemyBomb.isAlive) {
+                            enemyTank.bombs.remove(enemyBomb);
+                        }
+                    }
                 }
             }
 

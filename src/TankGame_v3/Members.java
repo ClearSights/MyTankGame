@@ -194,6 +194,13 @@ class EnemyTank extends Tank implements Runnable {
 
             // change direction
             direction = (int)(4 * Math.random());
+
+            // shoot bomb
+            if (bombs.size() < MAX_BOMB_NUM) {
+                Bomb bomb = shoot();
+                Thread bombThread = new Thread(bomb);
+                bombThread.start();
+            }
         }
     }
 }
@@ -206,7 +213,7 @@ class Bomb implements Runnable {
 
     private int x;
     private int y;
-    private int speed = 8;
+    private int speed = 5;
     private Color color;
     private int direction;
 
