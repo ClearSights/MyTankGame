@@ -16,12 +16,12 @@ class Tank {
     public static final int WIDTH = 24;
     public static final int HEIGHT = 36;
 
-    int x = 0;      // x of center
-    int y = 0;      // y of center
-    int speed = 2;
-    int dirVH;
-    int dirPosNeg;
-    Color color;
+    private int x = 0;      // x of center
+    private int y = 0;      // y of center
+    private int speed = 2;
+    private int dirVH;
+    private int dirPosNeg;
+    private Color color;
 
     public boolean isAlive = true;
     public Vector<Bomb> bombs = new Vector<>();
@@ -41,12 +41,24 @@ class Tank {
         return y;
     }
 
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
     public void setColor(Color color) {
         this.color = color;
     }
 
     public Color getColor() {
         return color;
+    }
+
+    public int getSpeed() {
+        return speed;
     }
 
     public int getDirVH() {
@@ -128,18 +140,21 @@ class EnemyTank extends Tank implements Runnable {
         if (panelEnemyTanks != null) {
             for (EnemyTank et : panelEnemyTanks) {
                 if (et != this) {
-                    if (et.dirVH == DIR_V && this.dirVH == DIR_V) {
-                        if (Math.abs(et.x-this.x) <= Tank.WIDTH && Math.abs(et.y - this.y) <= Tank.HEIGHT) {
+                    if (et.getDirVH() == DIR_V && this.getDirVH() == DIR_V) {
+                        if (Math.abs(et.getX()-this.getX()) <= Tank.WIDTH
+                                && Math.abs(et.getY() - this.getY()) <= Tank.HEIGHT) {
                             return true;
                         }
-                    } else if (et.dirVH == DIR_H && this.dirVH == DIR_H) {
-                        if (Math.abs(et.x - this.x) <= Tank.HEIGHT && Math.abs(et.y - this.y) <= Tank.WIDTH) {
+                    } else if (et.getDirVH() == DIR_H && this.getDirVH() == DIR_H) {
+                        if (Math.abs(et.getX() - this.getX()) <= Tank.HEIGHT
+                                && Math.abs(et.getY() - this.getY()) <= Tank.WIDTH) {
                             return true;
                         }
-                    } else if (et.dirVH * this.dirVH < 0) {
+                    } else if (et.getDirVH() * this.getDirVH() < 0) {
                         // if their directions are orthogonal
                         int spacing = Tank.WIDTH/2 + Tank.HEIGHT/2;
-                        if (Math.abs(et.x - this.x) <= spacing && Math.abs(et.y - this.y) <= spacing) {
+                        if (Math.abs(et.getX() - this.getX()) <= spacing
+                                && Math.abs(et.getY() - this.getY()) <= spacing) {
                             return true;
                         }
                     }
@@ -152,14 +167,14 @@ class EnemyTank extends Tank implements Runnable {
     @Override
     public void run() {
         while (isAlive) {
-            switch (dirVH) {
+            switch (getDirVH()) {
                 case DIR_V:
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
                         // up or down
-                        if ((dirPosNeg==DIR_NEGATIVE && y>=HEIGHT/2+speed)
-                                || (dirPosNeg==DIR_POSITIVE && y+HEIGHT/2+speed<=MainFrame.W_HEIGHT)) {
+                        if ((getDirPosNeg()==DIR_POSITIVE && getY()+HEIGHT/2+getSpeed()<=MainFrame.W_HEIGHT)
+                                || (getDirPosNeg()==DIR_NEGATIVE && getY()>=HEIGHT/2+getSpeed())) {
                             if (!detectCollision()) {
-                                y += speed * dirPosNeg;
+                                setY(getY() + getSpeed() * getDirPosNeg());
                             }
                         }
                         try {
@@ -172,10 +187,10 @@ class EnemyTank extends Tank implements Runnable {
                 case DIR_H:
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
                         // left or right
-                        if ((dirPosNeg==DIR_NEGATIVE && x>=WIDTH/2+speed)    // up
-                                || (dirPosNeg==DIR_POSITIVE && x+WIDTH/2+speed<=MainFrame.W_WIDTH)) {
+                        if ((getDirPosNeg()==DIR_POSITIVE && getX()+WIDTH/2+getSpeed()<=MainFrame.W_WIDTH)
+                                || (getDirPosNeg()==DIR_NEGATIVE && getX()>=WIDTH/2+getSpeed())) {
                             if (!detectCollision()) {
-                                x += speed * dirPosNeg;
+                                setX(getX() + getSpeed() * getDirPosNeg());
                             }
                         }
                         try {
@@ -189,14 +204,14 @@ class EnemyTank extends Tank implements Runnable {
 
             // next direction
             if (Math.random() >= 0.5) {
-                dirPosNeg = DIR_POSITIVE;
+                setDirPosNeg(DIR_POSITIVE);
             } else {
-                dirPosNeg = DIR_NEGATIVE;
+                setDirPosNeg(DIR_NEGATIVE);
             }
             if (Math.random() >= 0.5) {
-                dirVH = DIR_V;
+                setDirVH(DIR_V);
             } else {
-                dirVH = DIR_H;
+                setDirVH(DIR_H);
             }
 
             // shoot bomb
