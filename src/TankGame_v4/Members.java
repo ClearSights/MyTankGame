@@ -22,6 +22,7 @@ class Tank {
     private int dirVH;
     private int dirPosNeg;
     private Color color;
+    private boolean isPaused = false;
 
     public boolean isAlive = true;
     public Vector<Bomb> bombs = new Vector<>();
@@ -75,6 +76,14 @@ class Tank {
 
     public void setDirPosNeg(int dirPosNeg) {
         this.dirPosNeg = dirPosNeg;
+    }
+
+    public boolean isPaused() {
+        return isPaused;
+    }
+
+    public void setPaused(boolean paused) {
+        isPaused = paused;
     }
 
     // move one step
@@ -171,10 +180,12 @@ class EnemyTank extends Tank implements Runnable {
                 case DIR_V:
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
                         // up or down
-                        if ((getDirPosNeg()==DIR_POSITIVE && getY()+HEIGHT/2+getSpeed()<=MainFrame.W_HEIGHT)
-                                || (getDirPosNeg()==DIR_NEGATIVE && getY()>=HEIGHT/2+getSpeed())) {
-                            if (!detectCollision()) {
-                                setY(getY() + getSpeed() * getDirPosNeg());
+                        if (!isPaused()) {
+                            if ((getDirPosNeg()==DIR_POSITIVE && getY()+HEIGHT/2+getSpeed()<=MainFrame.W_HEIGHT)
+                                    || (getDirPosNeg()==DIR_NEGATIVE && getY()>=HEIGHT/2+getSpeed())) {
+                                if (!detectCollision()) {
+                                    setY(getY() + getSpeed() * getDirPosNeg());
+                                }
                             }
                         }
                         try {
@@ -186,11 +197,13 @@ class EnemyTank extends Tank implements Runnable {
                     break;
                 case DIR_H:
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
-                        // left or right
-                        if ((getDirPosNeg()==DIR_POSITIVE && getX()+WIDTH/2+getSpeed()<=MainFrame.W_WIDTH)
-                                || (getDirPosNeg()==DIR_NEGATIVE && getX()>=WIDTH/2+getSpeed())) {
-                            if (!detectCollision()) {
-                                setX(getX() + getSpeed() * getDirPosNeg());
+                        if (!isPaused()) {
+                            // left or right
+                            if ((getDirPosNeg()==DIR_POSITIVE && getX()+WIDTH/2+getSpeed()<=MainFrame.W_WIDTH)
+                                    || (getDirPosNeg()==DIR_NEGATIVE && getX()>=WIDTH/2+getSpeed())) {
+                                if (!detectCollision()) {
+                                    setX(getX() + getSpeed() * getDirPosNeg());
+                                }
                             }
                         }
                         try {
@@ -203,22 +216,24 @@ class EnemyTank extends Tank implements Runnable {
             }
 
             // next direction
-            if (Math.random() >= 0.5) {
-                setDirPosNeg(DIR_POSITIVE);
-            } else {
-                setDirPosNeg(DIR_NEGATIVE);
-            }
-            if (Math.random() >= 0.5) {
-                setDirVH(DIR_V);
-            } else {
-                setDirVH(DIR_H);
-            }
+            if (!isPaused()) {
+                if (Math.random() >= 0.5) {
+                    setDirPosNeg(DIR_POSITIVE);
+                } else {
+                    setDirPosNeg(DIR_NEGATIVE);
+                }
+                if (Math.random() >= 0.5) {
+                    setDirVH(DIR_V);
+                } else {
+                    setDirVH(DIR_H);
+                }
 
-            // shoot bomb
-            if (bombs.size() < MAX_BOMB_NUM) {
-                Bomb bomb = shoot();
-                Thread bombThread = new Thread(bomb);
-                bombThread.start();
+                // shoot bomb
+                if (bombs.size() < MAX_BOMB_NUM) {
+                    Bomb bomb = shoot();
+                    Thread bombThread = new Thread(bomb);
+                    bombThread.start();
+                }
             }
         }
     }
@@ -229,14 +244,15 @@ class Bomb implements Runnable {
     public static final int DIR_NEGATIVE = -1;  // left
     public static final int DIR_V = 2;          // vertical
     public static final int DIR_H = -2;         // horizontal
+    public static final int STEP_INTERVAL = 100;
 
     private int x;
     private int y;
-
     private int speed = 5;
     private Color color;
     private int dirVH;
     private int dirPosNeg;
+    private boolean isPaused = false;
 
     public boolean isAlive = false;
 
@@ -264,27 +280,37 @@ class Bomb implements Runnable {
         return dirPosNeg;
     }
 
+    public boolean isPaused() {
+        return isPaused;
+    }
+
+    public void setPaused(boolean paused) {
+        isPaused = paused;
+    }
+
     @Override
     public void run() {
         while (true) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(STEP_INTERVAL);
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             // judge whether alive
-            if (x < 0 | x > MainFrame.W_WIDTH | y < 0 | y > MainFrame.W_HEIGHT) {
+            if (x < 0 || x > MainFrame.W_WIDTH || y < 0 || y > MainFrame.W_HEIGHT) {
                 isAlive = false;
                 break;
             } else {
-                switch (dirVH) {
-                    case DIR_V:
-                        y += speed * dirPosNeg;
-                        break;
-                    case DIR_H:
-                        x += speed * dirPosNeg;
-                        break;
+                if (!isPaused) {
+                    switch (dirVH) {
+                        case DIR_V:
+                            y += speed * dirPosNeg;
+                            break;
+                        case DIR_H:
+                            x += speed * dirPosNeg;
+                            break;
+                    }
                 }
             }
         }

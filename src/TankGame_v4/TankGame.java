@@ -2,8 +2,7 @@ package TankGame_v4;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.Vector;
 
 /**
@@ -15,28 +14,61 @@ import java.util.Vector;
  * 4. enemy tanks can move randomly within the boundary
  * 5. enemy tanks can shoot bombs, heroTank hit by enemyBomb will die
  * 6. enemy tanks can avoid collision with each other
+ * 7. add stage info screen and menubar
+ * 8. add pause/resume function by pressing space
  */
 public class TankGame {
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        UIManager.put("defaultFont", new Font("Arial", Font.PLAIN, 14));
+
         MainFrame mainFrame = new MainFrame();
         mainFrame.showUp();
     }
 }
 
-class MainFrame extends JFrame {
+class MainFrame extends JFrame implements ActionListener {
     public static final int W_WIDTH = 800;
     public static final int W_HEIGHT = 600;
 
+    JMenuBar menuBar;
+    JMenu menu_game;
+    JMenuItem item_newGame, item_exit;
+
+    StartPanel startPanel;
     private MainPanel mainPanel;
-    private Thread panelThread;
+    private Thread mainPanelThread;
 
     public MainFrame() {
-        mainPanel = new MainPanel();
-        this.add(mainPanel);
-        this.addKeyListener(mainPanel);
+        // menu
+        menuBar = new JMenuBar();
+        menu_game = new JMenu();
+        item_newGame = new JMenuItem();
+        item_exit = new JMenuItem();
 
-        panelThread = new Thread(mainPanel);
-        panelThread.start();
+        menu_game.setText("Game(G)");
+        menu_game.setMnemonic('G');
+        item_newGame.setText("New Game(N)");
+        item_newGame.setMnemonic('N');
+        item_exit.setText("Exit(Esc)");
+
+        item_newGame.addActionListener(this);
+        item_newGame.setActionCommand("new_game");
+        item_exit.addActionListener(this);
+        item_exit.setActionCommand("exit");
+
+        menu_game.add(item_newGame);
+        menu_game.add(item_exit);
+        menuBar.add(menu_game);
+        this.setJMenuBar(menuBar);
+
+        // start panel
+        startPanel = new StartPanel();
+        this.add(startPanel);
     }
 
     public void showUp() {
@@ -46,16 +78,54 @@ class MainFrame extends JFrame {
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setVisible(true);
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "new_game":
+                mainPanel = new MainPanel();
+                mainPanelThread = new Thread(mainPanel);
+                mainPanelThread.start();
+                this.addKeyListener(mainPanel);
+
+                this.remove(startPanel);
+                this.add(mainPanel);
+                this.setVisible(true);
+                break;
+            case "exit":
+                dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+                break;
+        }
+    }
+}
+
+class StartPanel extends JPanel {
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        // background
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, MainFrame.W_WIDTH, MainFrame.W_HEIGHT);
+
+        // info
+        g.setColor(Color.WHITE);
+        Font infoFont = new Font("Helvetica Neue", Font.ITALIC, 48);
+        g.setFont(infoFont);
+        g.drawString("Stage 1", 320, 250);
+    }
 }
 
 class MainPanel extends JPanel implements KeyListener, Runnable {
+    public static final int INTERVAL = 20;     // display update interval
+
     private HeroTank heroTank;
     private Vector<EnemyTank> enemyTanks;
-    private int enemyNum = 10;
+    private int enemyNum = 15;
 
     public MainPanel() {
         // initialize hero tank
-        heroTank = new HeroTank(MainFrame.W_WIDTH /2, MainFrame.W_HEIGHT - 2 * Tank.WIDTH);
+        heroTank = new HeroTank(MainFrame.W_WIDTH /2, MainFrame.W_HEIGHT - Tank.HEIGHT - 30);
 
         // initialize enemy tanks
         enemyTanks = new Vector<>();
@@ -180,39 +250,61 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:
             case KeyEvent.VK_W:
-                heroTank.setDirVH(Tank.DIR_V);
-                heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
-                heroTank.step();
+                if (!heroTank.isPaused()) {
+                    heroTank.setDirVH(Tank.DIR_V);
+                    heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
+                    heroTank.step();
+                }
                 break;
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_S:
-                heroTank.setDirVH(Tank.DIR_V);
-                heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
-                heroTank.step();
+                if (!heroTank.isPaused()) {
+                    heroTank.setDirVH(Tank.DIR_V);
+                    heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
+                    heroTank.step();
+                }
                 break;
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_A:
-                heroTank.setDirVH(Tank.DIR_H);
-                heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
-                heroTank.step();
+                if (!heroTank.isPaused()) {
+                    heroTank.setDirVH(Tank.DIR_H);
+                    heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
+                    heroTank.step();
+                }
                 break;
             case KeyEvent.VK_RIGHT:
             case KeyEvent.VK_D:
-                heroTank.setDirVH(Tank.DIR_H);
-                heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
-                heroTank.step();
+                if (!heroTank.isPaused()) {
+                    heroTank.setDirVH(Tank.DIR_H);
+                    heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
+                    heroTank.step();
+                }
                 break;
-        }
+            case KeyEvent.VK_J:
+                // press J, heroTank shoot bomb
+                if (!heroTank.isPaused() && heroTank.bombs.size() < Tank.MAX_BOMB_NUM) {
+                    Bomb thisBomb = heroTank.shoot();
+                    Thread bombThread = new Thread(thisBomb);
+                    bombThread.start();
+                }
+                break;
+            case KeyEvent.VK_SPACE:
+                // toggle pause/resume
+                boolean currentState = heroTank.isPaused();
+                heroTank.setPaused(!currentState);
+                for (Bomb bomb : heroTank.bombs) {
+                    bomb.setPaused(!currentState);
+                }
 
-        // press J, heroTank shoot bomb
-        if (e.getKeyCode() == KeyEvent.VK_J) {
-            if (heroTank.bombs.size() < Tank.MAX_BOMB_NUM) {
-                Bomb thisBomb = heroTank.shoot();
-                Thread bombThread = new Thread(thisBomb);
-                bombThread.start();
-            }
-        }
+                for (EnemyTank et : enemyTanks) {
+                    currentState = et.isPaused();
+                    et.setPaused(!currentState);
+                    for (Bomb bomb : et.bombs) {
+                        bomb.setPaused(!currentState);
+                    }
+                }
 
+        }
         repaint();
     }
 
@@ -226,7 +318,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
     public void run() {
         while (true) {
             try {
-                Thread.sleep(16);       // display update interval
+                Thread.sleep(INTERVAL);
             } catch (Exception e) {
                 e.printStackTrace();
             }
