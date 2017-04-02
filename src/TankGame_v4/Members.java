@@ -123,30 +123,31 @@ class EnemyTank extends Tank implements Runnable {
         panelEnemyTanks = ets;
     }
 
-//    // check collision with other enemyTanks
-//    public boolean detectCollision() {
-//        if (panelEnemyTanks != null) {
-//            for (EnemyTank et : panelEnemyTanks) {
-//                if (et != this) {
-//                    if (et.dirVH == DIR_V && this.dirVH == DIR_V) {
-//                        if ((et.x-this.x < Tank.WIDTH) && (et.y-this.y < Tank.HEIGHT)) {
-//                            return true;
-//                        }
-//                    } else if (et.dirVH == DIR_H && this.dirVH == DIR_H) {
-//                        if ((et.x-this.x < Tank.HEIGHT) && (et.y-this.y < Tank.WIDTH)) {
-//                            return true;
-//                        }
-//                    } else if (et.dirVH * this.dirVH < 0) {     // if their directions are orthogonal
-//                        if ((et.x-this.x < Tank.WIDTH/2+Tank.HEIGHT/2)
-//                                && (et.y-this.y < Tank.WIDTH/2+Tank.HEIGHT/2)) {
-//                            return true;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return false;
-//    }
+    // check collision with other enemyTanks
+    public boolean detectCollision() {
+        if (panelEnemyTanks != null) {
+            for (EnemyTank et : panelEnemyTanks) {
+                if (et != this) {
+                    if (et.dirVH == DIR_V && this.dirVH == DIR_V) {
+                        if (Math.abs(et.x-this.x) <= Tank.WIDTH && Math.abs(et.y - this.y) <= Tank.HEIGHT) {
+                            return true;
+                        }
+                    } else if (et.dirVH == DIR_H && this.dirVH == DIR_H) {
+                        if (Math.abs(et.x - this.x) <= Tank.HEIGHT && Math.abs(et.y - this.y) <= Tank.WIDTH) {
+                            return true;
+                        }
+                    } else if (et.dirVH * this.dirVH < 0) {
+                        // if their directions are orthogonal
+                        int spacing = Tank.WIDTH/2 + Tank.HEIGHT/2;
+                        if (Math.abs(et.x - this.x) <= spacing && Math.abs(et.y - this.y) <= spacing) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     @Override
     public void run() {
@@ -157,7 +158,9 @@ class EnemyTank extends Tank implements Runnable {
                         // up or down
                         if ((dirPosNeg==DIR_NEGATIVE && y>=HEIGHT/2+speed)
                                 || (dirPosNeg==DIR_POSITIVE && y+HEIGHT/2+speed<=MainFrame.W_HEIGHT)) {
-                            y += speed * dirPosNeg;
+                            if (!detectCollision()) {
+                                y += speed * dirPosNeg;
+                            }
                         }
                         try {
                             Thread.sleep(STEP_INTERVAL);
@@ -171,7 +174,9 @@ class EnemyTank extends Tank implements Runnable {
                         // left or right
                         if ((dirPosNeg==DIR_NEGATIVE && x>=WIDTH/2+speed)    // up
                                 || (dirPosNeg==DIR_POSITIVE && x+WIDTH/2+speed<=MainFrame.W_WIDTH)) {
-                            x += speed * dirPosNeg;
+                            if (!detectCollision()) {
+                                x += speed * dirPosNeg;
+                            }
                         }
                         try {
                             Thread.sleep(STEP_INTERVAL);

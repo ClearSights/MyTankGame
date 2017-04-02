@@ -182,24 +182,27 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
             case KeyEvent.VK_W:
                 heroTank.setDirVH(Tank.DIR_V);
                 heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
+                heroTank.step();
                 break;
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_S:
                 heroTank.setDirVH(Tank.DIR_V);
                 heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
+                heroTank.step();
                 break;
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_A:
                 heroTank.setDirVH(Tank.DIR_H);
                 heroTank.setDirPosNeg(Tank.DIR_NEGATIVE);
+                heroTank.step();
                 break;
             case KeyEvent.VK_RIGHT:
             case KeyEvent.VK_D:
                 heroTank.setDirVH(Tank.DIR_H);
                 heroTank.setDirPosNeg(Tank.DIR_POSITIVE);
+                heroTank.step();
                 break;
         }
-        heroTank.step();
 
         // press J, heroTank shoot bomb
         if (e.getKeyCode() == KeyEvent.VK_J) {
