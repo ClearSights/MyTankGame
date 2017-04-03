@@ -181,7 +181,7 @@ class EnemyTank extends Tank implements Runnable {
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
                         // up or down
                         if (!isPaused()) {
-                            if ((getDirPosNeg()==DIR_POSITIVE && getY()+HEIGHT/2+getSpeed()<=MainFrame.W_HEIGHT)
+                            if ((getDirPosNeg()==DIR_POSITIVE && getY()+HEIGHT/2+getSpeed()<=MainFrame.PANEL_HEIGHT)
                                     || (getDirPosNeg()==DIR_NEGATIVE && getY()>=HEIGHT/2+getSpeed())) {
                                 if (!detectCollision()) {
                                     setY(getY() + getSpeed() * getDirPosNeg());
@@ -199,7 +199,7 @@ class EnemyTank extends Tank implements Runnable {
                     for (int i = 0; i < CONTINUOUS_STEP_NUM; i++) {
                         if (!isPaused()) {
                             // left or right
-                            if ((getDirPosNeg()==DIR_POSITIVE && getX()+WIDTH/2+getSpeed()<=MainFrame.W_WIDTH)
+                            if ((getDirPosNeg()==DIR_POSITIVE && getX()+WIDTH/2+getSpeed()<=MainFrame.PANEL_WIDTH)
                                     || (getDirPosNeg()==DIR_NEGATIVE && getX()>=WIDTH/2+getSpeed())) {
                                 if (!detectCollision()) {
                                     setX(getX() + getSpeed() * getDirPosNeg());
@@ -217,12 +217,12 @@ class EnemyTank extends Tank implements Runnable {
 
             // next direction
             if (!isPaused()) {
-                if (Math.random() >= 0.5) {
+                if (Math.random() >= 0.3) {
                     setDirPosNeg(DIR_POSITIVE);
                 } else {
                     setDirPosNeg(DIR_NEGATIVE);
                 }
-                if (Math.random() >= 0.5) {
+                if (Math.random() >= 0.3) {
                     setDirVH(DIR_V);
                 } else {
                     setDirVH(DIR_H);
@@ -298,7 +298,7 @@ class Bomb implements Runnable {
             }
 
             // judge whether alive
-            if (x < 0 || x > MainFrame.W_WIDTH || y < 0 || y > MainFrame.W_HEIGHT) {
+            if (x < 0 || x > MainFrame.PANEL_WIDTH || y < 0 || y > MainFrame.PANEL_HEIGHT) {
                 isAlive = false;
                 break;
             } else {
@@ -314,5 +314,47 @@ class Bomb implements Runnable {
                 }
             }
         }
+    }
+}
+
+class Recorder {
+    private static int enemyNum = 3;
+    private static int heroLifeNum = 3;
+    private static int score = 0;
+
+    public static int getEnemyNum() {
+        return enemyNum;
+    }
+
+    public static int getHeroLifeNum() {
+        return heroLifeNum;
+    }
+
+    public static int getScore() {
+        return score;
+    }
+
+    public static void setEnemyNum(int enemyNum) {
+        Recorder.enemyNum = enemyNum;
+    }
+
+    public static void setHeroLifeNum(int heroLifeNum) {
+        Recorder.heroLifeNum = heroLifeNum;
+    }
+
+    public static void setScore(int score) {
+        Recorder.score = score;
+    }
+
+    public static void enemyNumDecrease() {
+        enemyNum--;
+    }
+
+    public static void heroNumDecrease() {
+        heroLifeNum--;
+    }
+
+    public static void addScore() {
+        score++;
     }
 }
