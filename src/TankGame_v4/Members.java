@@ -1,6 +1,7 @@
 package TankGame_v4;
 
 import java.awt.*;
+import java.io.*;
 import java.util.Vector;
 
 /**
@@ -322,6 +323,12 @@ class Recorder {
     private static int heroLifeNum = 3;
     private static int score = 0;
 
+    private static FileWriter fw;
+    private static BufferedWriter bw;
+    private static FileReader fr;
+    private static BufferedReader br;
+    private static String saveFileName = "save.txt";
+
     public static int getEnemyNum() {
         return enemyNum;
     }
@@ -356,5 +363,83 @@ class Recorder {
 
     public static void addScore() {
         score++;
+    }
+
+    // save game settings and current situation
+    public static void saveGame(MainPanel mainPanel) {
+        try {
+            fw = new FileWriter(saveFileName);
+            bw = new BufferedWriter(fw);
+            StringBuilder builder = new StringBuilder();
+
+            // basic
+            builder.append("heroLifeNum\n" + heroLifeNum);
+            builder.append("\nenemyNum\n" + enemyNum);
+            builder.append("\nScore\n" + score);
+
+            mainPanel.pauseGame();
+
+            // details about heroTank
+            HeroTank heroTank = mainPanel.getHeroTank();
+            builder.append("\n\nHeroTank");
+            builder.append(saveTankInfo(heroTank));
+
+            for (Bomb heroBomb : heroTank.bombs) {
+                if (heroBomb.isAlive) {
+                    builder.append("\n\nbomb");
+                    builder.append(saveBombInfo(heroBomb));
+                }
+            }
+
+            // details about enemy tanks
+            Vector<EnemyTank> enemyTanks = mainPanel.getEnemyTanks();
+            for (EnemyTank et : enemyTanks) {
+                if (et.isAlive) {
+                    builder.append("\n\nEnemyTank");
+                    builder.append(saveTankInfo(et));
+
+                    for (Bomb enemyBomb : et.bombs) {
+                        if (enemyBomb.isAlive) {
+                            builder.append("\n\nbomb");
+                            builder.append(saveBombInfo(enemyBomb));
+                        }
+                    }
+                }
+            }
+
+            // write
+            bw.write(builder.toString());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } finally {
+            try {
+                bw.close();
+                fw.close();
+            } catch (IOException ioe2) {
+                ioe2.printStackTrace();
+            }
+        }
+    }
+
+    public static String saveTankInfo(Tank tank) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("\nx\n" + tank.getX());
+        builder.append("\ny\n" + tank.getY());
+        builder.append("\ndirVH\n" + tank.getDirVH());
+        builder.append("\ndirPosNeg\n" + tank.getDirPosNeg());
+        return builder.toString();
+    }
+
+    public static String saveBombInfo(Bomb bomb) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("\nx\n" + bomb.getX());
+        builder.append("\ny\n" + bomb.getY());
+        builder.append("\ndirVH\n" + bomb.getDirVH());
+        builder.append("\ndirPosNeg\n" + bomb.getDirPosNeg());
+        return builder.toString();
+    }
+
+    public static void loadGame() {
+
     }
 }
