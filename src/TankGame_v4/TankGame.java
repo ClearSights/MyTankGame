@@ -3,6 +3,7 @@ package TankGame_v4;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.Vector;
 
 /**
@@ -19,6 +20,7 @@ import java.util.Vector;
  * 9. add game info display
  * 10. add game info & situation saving function
  * 11. add load last game function
+ * 12. add sound effect when starting or loading
  */
 public class TankGame {
     public static void main(String[] args) {
@@ -38,6 +40,7 @@ class MainFrame extends JFrame implements ActionListener {
     public static final int PANEL_WIDTH = 600;
     public static final int PANEL_HEIGHT = 500;
     public static final int INFO_WIDTH = 150;
+    public static String audioFiileName = "start.wav";
 
     JMenuBar menuBar;
     JMenu menu_game;
@@ -46,6 +49,7 @@ class MainFrame extends JFrame implements ActionListener {
     private StartPanel startPanel;
     private MainPanel mainPanel;
     private Thread mainPanelThread;
+    private SoundPlayer soundPlayer;
 
     public MainFrame() {
         // menu
@@ -108,6 +112,10 @@ class MainFrame extends JFrame implements ActionListener {
                 this.remove(startPanel);
                 this.add(mainPanel);
                 this.setVisible(true);
+
+                // play sound
+                soundPlayer = new SoundPlayer(new File(audioFiileName));
+                new Thread(soundPlayer).start();
                 break;
             case "load_game":
                 Recorder.loadGame();
@@ -120,6 +128,10 @@ class MainFrame extends JFrame implements ActionListener {
                 this.remove(startPanel);
                 this.add(mainPanel);
                 this.setVisible(true);
+
+                // play sound
+                soundPlayer = new SoundPlayer(new File(audioFiileName));
+                new Thread(soundPlayer).start();
                 break;
             case "save_exit":
                 Recorder.saveGame(mainPanel);

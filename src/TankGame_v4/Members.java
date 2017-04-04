@@ -1,5 +1,6 @@
 package TankGame_v4;
 
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.io.*;
 import java.util.Vector;
@@ -13,7 +14,7 @@ class Tank {
     public static final int DIR_V = 2;          // vertical
     public static final int DIR_H = -2;         // horizontal
 
-    public static final int MAX_BOMB_NUM = 5;
+    public static final int MAX_BOMB_NUM = 6;
     public static final int WIDTH = 24;
     public static final int HEIGHT = 36;
 
@@ -129,7 +130,7 @@ class HeroTank extends Tank {
 
 class EnemyTank extends Tank implements Runnable {
     private int CONTINUOUS_STEP_NUM = 5;    // number of continuous march sequence
-    private int STEP_INTERVAL = 100;        // interval of consequent marches
+    private int STEP_INTERVAL = 80;        // interval of consequent marches
     private Vector<EnemyTank> panelEnemyTanks;
 
     public EnemyTank(int x, int y) {
@@ -218,12 +219,12 @@ class EnemyTank extends Tank implements Runnable {
 
             // next direction
             if (!isPaused()) {
-                if (Math.random() >= 0.3) {
+                if (Math.random() >= 0.4) {
                     setDirPosNeg(DIR_POSITIVE);
                 } else {
                     setDirPosNeg(DIR_NEGATIVE);
                 }
-                if (Math.random() >= 0.3) {
+                if (Math.random() >= 0.4) {
                     setDirVH(DIR_V);
                 } else {
                     setDirVH(DIR_H);
@@ -245,7 +246,7 @@ class Bomb implements Runnable {
     public static final int DIR_NEGATIVE = -1;  // left
     public static final int DIR_V = 2;          // vertical
     public static final int DIR_H = -2;         // horizontal
-    public static final int STEP_INTERVAL = 120;
+    public static final int STEP_INTERVAL = 80;
 
     private int x;
     private int y;
@@ -468,6 +469,42 @@ class Recorder {
             } catch (IOException ioe2) {
                 ioe2.printStackTrace();
             }
+        }
+    }
+}
+
+class SoundPlayer implements Runnable {
+    AudioInputStream audioInputStream;
+    AudioFormat format;
+    SourceDataLine sourceDataLine;
+    File audioFile;
+
+    int bufferSize = 1024;
+    byte[] b = new byte[bufferSize];
+    int len = 0;
+
+    public SoundPlayer(File file) {
+        audioFile = file;
+    }
+
+    @Override
+    public void run() {
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(audioFile);
+            format = audioInputStream.getFormat();
+            sourceDataLine = AudioSystem.getSourceDataLine(format);
+            sourceDataLine.open(format, bufferSize);
+            sourceDataLine.start();
+
+            while ((len = audioInputStream.read(b)) > 0) {
+                sourceDataLine.write(b, 0, len);
+            }
+
+            audioInputStream.close();
+            sourceDataLine.drain();
+            sourceDataLine.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
