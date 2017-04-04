@@ -129,7 +129,7 @@ class HeroTank extends Tank {
 
 class EnemyTank extends Tank implements Runnable {
     private int CONTINUOUS_STEP_NUM = 5;    // number of continuous march sequence
-    private int STEP_INTERVAL = 150;        // interval of consequent marches
+    private int STEP_INTERVAL = 100;        // interval of consequent marches
     private Vector<EnemyTank> panelEnemyTanks;
 
     public EnemyTank(int x, int y) {
@@ -245,7 +245,7 @@ class Bomb implements Runnable {
     public static final int DIR_NEGATIVE = -1;  // left
     public static final int DIR_V = 2;          // vertical
     public static final int DIR_H = -2;         // horizontal
-    public static final int STEP_INTERVAL = 100;
+    public static final int STEP_INTERVAL = 120;
 
     private int x;
     private int y;
@@ -329,6 +329,9 @@ class Recorder {
     private static BufferedReader br;
     private static String saveFileName = "save.txt";
 
+    private static HeroTank heroTank = null;
+    private static Vector<EnemyTank> enemyTanks = null;
+
     public static int getEnemyNum() {
         return enemyNum;
     }
@@ -353,6 +356,14 @@ class Recorder {
         Recorder.score = score;
     }
 
+    public static HeroTank getHeroTank() {
+        return heroTank;
+    }
+
+    public static Vector<EnemyTank> getEnemyTanks() {
+        return enemyTanks;
+    }
+
     public static void enemyNumDecrease() {
         enemyNum--;
     }
@@ -372,42 +383,23 @@ class Recorder {
             bw = new BufferedWriter(fw);
             StringBuilder builder = new StringBuilder();
 
-            // basic
-            builder.append("heroLifeNum\n" + heroLifeNum);
-            builder.append("\nenemyNum\n" + enemyNum);
-            builder.append("\nScore\n" + score);
-
             mainPanel.pauseGame();
+            builder.append(heroLifeNum + "\t" + enemyNum + "\t" + score + "\n");
 
             // details about heroTank
-            HeroTank heroTank = mainPanel.getHeroTank();
-            builder.append("\n\nHeroTank");
+//            HeroTank heroTank = mainPanel.getHeroTank();
+            heroTank = mainPanel.getHeroTank();
             builder.append(saveTankInfo(heroTank));
 
-            for (Bomb heroBomb : heroTank.bombs) {
-                if (heroBomb.isAlive) {
-                    builder.append("\n\nbomb");
-                    builder.append(saveBombInfo(heroBomb));
-                }
-            }
-
             // details about enemy tanks
-            Vector<EnemyTank> enemyTanks = mainPanel.getEnemyTanks();
+//            Vector<EnemyTank> enemyTanks = mainPanel.getEnemyTanks();
+            enemyTanks = mainPanel.getEnemyTanks();
             for (EnemyTank et : enemyTanks) {
                 if (et.isAlive) {
-                    builder.append("\n\nEnemyTank");
                     builder.append(saveTankInfo(et));
-
-                    for (Bomb enemyBomb : et.bombs) {
-                        if (enemyBomb.isAlive) {
-                            builder.append("\n\nbomb");
-                            builder.append(saveBombInfo(enemyBomb));
-                        }
-                    }
                 }
             }
 
-            // write
             bw.write(builder.toString());
         } catch (IOException ioe) {
             ioe.printStackTrace();
@@ -421,25 +413,61 @@ class Recorder {
         }
     }
 
-    public static String saveTankInfo(Tank tank) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("\nx\n" + tank.getX());
-        builder.append("\ny\n" + tank.getY());
-        builder.append("\ndirVH\n" + tank.getDirVH());
-        builder.append("\ndirPosNeg\n" + tank.getDirPosNeg());
-        return builder.toString();
+    private static String saveTankInfo(Tank tank) {
+        String info = tank.getX() + "\t" + tank.getY() + "\t"
+                + tank.getDirVH() + "\t" + tank.getDirPosNeg() + "\n";
+        return info;
     }
 
-    public static String saveBombInfo(Bomb bomb) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("\nx\n" + bomb.getX());
-        builder.append("\ny\n" + bomb.getY());
-        builder.append("\ndirVH\n" + bomb.getDirVH());
-        builder.append("\ndirPosNeg\n" + bomb.getDirPosNeg());
-        return builder.toString();
+    private static String saveBombInfo(Bomb bomb) {
+        String info = bomb.getX() + "\t" + bomb.getY() + "\t"
+                + bomb.getDirVH() + "\t" + bomb.getDirPosNeg() + "\n";
+        return info;
     }
 
     public static void loadGame() {
+        try {
+            fr = new FileReader(saveFileName);
+            br = new BufferedReader(fr);
 
+            // first line
+            String line = br.readLine();
+            String[] params = line.split("\t");
+            setHeroLifeNum(Integer.parseInt(params[0]));
+            setEnemyNum(Integer.parseInt(params[1]));
+            setScore(Integer.parseInt(params[2]));
+
+            // second line, hero tank
+            line = br.readLine();
+            params = line.split("\t");
+            int x = Integer.parseInt(params[0]);
+            int y = Integer.parseInt(params[1]);
+            heroTank = new HeroTank(x, y);
+            heroTank.setDirVH(Integer.parseInt(params[2]));
+            heroTank.setDirPosNeg(Integer.parseInt(params[3]));
+
+            // enemy tanks
+            enemyTanks = new Vector<>();
+            for (int i = 0; i < enemyNum; i++) {
+                if ((line = br.readLine()) != null) {
+                    params = line.split("\t");
+                    int enemyX = Integer.parseInt(params[0]);
+                    int enemyY = Integer.parseInt(params[1]);
+                    EnemyTank et = new EnemyTank(enemyX, enemyY);
+                    et.setDirVH(Integer.parseInt(params[2]));
+                    et.setDirPosNeg(Integer.parseInt(params[3]));
+                    enemyTanks.add(et);
+                }
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } finally {
+            try {
+                br.close();
+                fr.close();
+            } catch (IOException ioe2) {
+                ioe2.printStackTrace();
+            }
+        }
     }
 }

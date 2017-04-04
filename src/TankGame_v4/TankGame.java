@@ -18,6 +18,7 @@ import java.util.Vector;
  * 8. add pause/resume function by pressing space
  * 9. add game info display
  * 10. add game info & situation saving function
+ * 11. add load last game function
  */
 public class TankGame {
     public static void main(String[] args) {
@@ -40,7 +41,7 @@ class MainFrame extends JFrame implements ActionListener {
 
     JMenuBar menuBar;
     JMenu menu_game;
-    JMenuItem item_newGame, item_exit;
+    JMenuItem item_newGame, item_loadGame, item_saveGame, item_exit;
 
     private StartPanel startPanel;
     private MainPanel mainPanel;
@@ -51,20 +52,33 @@ class MainFrame extends JFrame implements ActionListener {
         menuBar = new JMenuBar();
         menu_game = new JMenu();
         item_newGame = new JMenuItem();
+        item_loadGame = new JMenuItem();
+        item_saveGame = new JMenuItem();
         item_exit = new JMenuItem();
 
         menu_game.setText("Game(G)");
-        menu_game.setMnemonic('G');
         item_newGame.setText("New Game(N)");
+        item_loadGame.setText("Load Last Game(L)");
+        item_saveGame.setText("Save And Exit(S)");
+        item_exit.setText("Exit");
+        menu_game.setMnemonic('G');
         item_newGame.setMnemonic('N');
-        item_exit.setText("Exit(Esc)");
+        item_loadGame.setMnemonic('L');
+        item_saveGame.setMnemonic('S');
 
         item_newGame.addActionListener(this);
-        item_newGame.setActionCommand("new_game");
+        item_loadGame.addActionListener(this);
+        item_saveGame.addActionListener(this);
         item_exit.addActionListener(this);
+        item_newGame.setActionCommand("new_game");
+        item_loadGame.setActionCommand("load_game");
+        item_saveGame.setActionCommand("save_exit");
         item_exit.setActionCommand("exit");
 
         menu_game.add(item_newGame);
+        menu_game.add(item_loadGame);
+        menu_game.addSeparator();
+        menu_game.add(item_saveGame);
         menu_game.add(item_exit);
         menuBar.add(menu_game);
         this.setJMenuBar(menuBar);
@@ -86,7 +100,7 @@ class MainFrame extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
             case "new_game":
-                mainPanel = new MainPanel();
+                mainPanel = new MainPanel(true);
                 mainPanelThread = new Thread(mainPanel);
                 mainPanelThread.start();
                 this.addKeyListener(mainPanel);
@@ -95,8 +109,23 @@ class MainFrame extends JFrame implements ActionListener {
                 this.add(mainPanel);
                 this.setVisible(true);
                 break;
-            case "exit":
+            case "load_game":
+                Recorder.loadGame();
+
+                mainPanel = new MainPanel(false);
+                mainPanelThread = new Thread(mainPanel);
+                mainPanelThread.start();
+                this.addKeyListener(mainPanel);
+
+                this.remove(startPanel);
+                this.add(mainPanel);
+                this.setVisible(true);
+                break;
+            case "save_exit":
                 Recorder.saveGame(mainPanel);
+                System.exit(0);
+                break;
+            case "exit":
                 System.exit(0);
                 break;
         }
@@ -134,20 +163,26 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
         return enemyTanks;
     }
 
-    public MainPanel() {
-        // initialize hero tank
-        heroTank = new HeroTank(MainFrame.PANEL_WIDTH /2, MainFrame.PANEL_HEIGHT - Tank.HEIGHT - 30);
+    public MainPanel(boolean isNewGame) {
+        if (isNewGame) {
+            // initialize hero tank
+            heroTank = new HeroTank(MainFrame.PANEL_WIDTH /2, MainFrame.PANEL_HEIGHT - Tank.HEIGHT - 30);
 
-        // initialize enemy tanks
-        int enemyNum = Recorder.getEnemyNum();
-        enemyTanks = new Vector<>();
-        for (int i = 0; i < enemyNum; i++) {
-            int et_x = MainFrame.PANEL_WIDTH /(2*enemyNum) + i*MainFrame.PANEL_WIDTH /enemyNum;
-            int et_y = Tank.HEIGHT / 2;
-            EnemyTank et = new EnemyTank(et_x, et_y);
-            enemyTanks.add(et);
+            // initialize enemy tanks
+            int enemyNum = Recorder.getEnemyNum();
+            enemyTanks = new Vector<>();
+            for (int i = 0; i < enemyNum; i++) {
+                int et_x = MainFrame.PANEL_WIDTH /(2*enemyNum) + i*MainFrame.PANEL_WIDTH /enemyNum;
+                int et_y = Tank.HEIGHT / 2;
+                EnemyTank et = new EnemyTank(et_x, et_y);
+                enemyTanks.add(et);
+            }
+        } else {
+            heroTank = Recorder.getHeroTank();
+            enemyTanks = Recorder.getEnemyTanks();
         }
 
+        // let enemy tanks move
         for (EnemyTank et : enemyTanks) {
             et.passEnemyTanks(enemyTanks);
 
