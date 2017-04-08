@@ -40,7 +40,7 @@ class MainFrame extends JFrame implements ActionListener {
     public static final int PANEL_WIDTH = 600;
     public static final int PANEL_HEIGHT = 500;
     public static final int INFO_WIDTH = 150;
-    public static String audioFiileName = "start.wav";
+    public static String audioFileName = "start.wav";
 
     JMenuBar menuBar;
     JMenu menu_game;
@@ -100,6 +100,16 @@ class MainFrame extends JFrame implements ActionListener {
         this.setVisible(true);
     }
 
+    public boolean playStartMusic(SoundPlayer soundPlayer, File audioFile) {
+        if (audioFile.exists()) {
+            soundPlayer = new SoundPlayer(audioFile);
+            new Thread(soundPlayer).start();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
@@ -114,8 +124,7 @@ class MainFrame extends JFrame implements ActionListener {
                 this.setVisible(true);
 
                 // play sound
-                soundPlayer = new SoundPlayer(new File(audioFiileName));
-                new Thread(soundPlayer).start();
+                playStartMusic(soundPlayer, new File(audioFileName));
                 break;
             case "load_game":
                 Recorder.loadGame();
@@ -130,8 +139,7 @@ class MainFrame extends JFrame implements ActionListener {
                 this.setVisible(true);
 
                 // play sound
-                soundPlayer = new SoundPlayer(new File(audioFiileName));
-                new Thread(soundPlayer).start();
+                playStartMusic(soundPlayer, new File(audioFileName));
                 break;
             case "save_exit":
                 Recorder.saveGame(mainPanel);
