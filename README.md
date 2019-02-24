@@ -1,4 +1,6 @@
 # MyTankGame
-I'm learning Java GUI programming. 
+A simple tank game written in Java.
 
-This is my learning project.
+# How to play
+Press `W`, `A`, `S`, `D` or arrow keys to move.
+Press `J` to shoot.  

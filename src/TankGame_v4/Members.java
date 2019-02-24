@@ -20,7 +20,7 @@ class Tank {
 
     private int x = 0;      // x of center
     private int y = 0;      // y of center
-    private int speed = 2;
+    private int speed = 3;
     private int dirVH;
     private int dirPosNeg;
     private Color color;

@@ -40,7 +40,7 @@ class MainFrame extends JFrame implements ActionListener {
     public static final int PANEL_WIDTH = 600;
     public static final int PANEL_HEIGHT = 500;
     public static final int INFO_WIDTH = 150;
-    public static String audioFiileName = "start.wav";
+    public static String audioFileName = "start.wav";
 
     JMenuBar menuBar;
     JMenu menu_game;
@@ -114,7 +114,7 @@ class MainFrame extends JFrame implements ActionListener {
                 this.setVisible(true);
 
                 // play sound
-                soundPlayer = new SoundPlayer(new File(audioFiileName));
+                soundPlayer = new SoundPlayer(new File(audioFileName));
                 new Thread(soundPlayer).start();
                 break;
             case "load_game":
@@ -130,7 +130,7 @@ class MainFrame extends JFrame implements ActionListener {
                 this.setVisible(true);
 
                 // play sound
-                soundPlayer = new SoundPlayer(new File(audioFiileName));
+                soundPlayer = new SoundPlayer(new File(audioFileName));
                 new Thread(soundPlayer).start();
                 break;
             case "save_exit":
@@ -430,30 +430,28 @@ class MainPanel extends JPanel implements KeyListener, Runnable {
                 e.printStackTrace();
             }
 
-            if (heroTank.isAlive) {
-                // check if bombs of heroTank out of bound
-                for (int i = 0; i < heroTank.bombs.size(); i++) {
-                    Bomb bomb = heroTank.bombs.get(i);
-                    if (checkBombOut(bomb)) {
-                        heroTank.bombs.remove(bomb);
-                    }
+            // check if bombs of heroTank out of bound
+            for (int i = 0; i < heroTank.bombs.size(); i++) {
+                Bomb bomb = heroTank.bombs.get(i);
+                if (checkBombOut(bomb)) {
+                    heroTank.bombs.remove(bomb);
                 }
+            }
 
-                // check if bombs of heroTank hit enemyTank
-                for (int i = 0; i < enemyTanks.size(); i++) {
-                    EnemyTank enemyTank = enemyTanks.get(i);
-                    if (enemyTank.isAlive) {
-                        for (int j = 0; j < heroTank.bombs.size(); j++) {
-                            Bomb heroBomb = heroTank.bombs.get(j);
+            // check if bombs of heroTank hit enemyTank
+            for (int i = 0; i < enemyTanks.size(); i++) {
+                EnemyTank enemyTank = enemyTanks.get(i);
+                if (enemyTank.isAlive) {
+                    for (int j = 0; j < heroTank.bombs.size(); j++) {
+                        Bomb heroBomb = heroTank.bombs.get(j);
 
-                            if (heroBomb.isAlive) {
-                                if (updateHit(enemyTank, heroBomb)) {
-                                    heroTank.bombs.remove(heroBomb);
-                                    enemyTanks.remove(enemyTank);
+                        if (heroBomb.isAlive) {
+                            if (updateHit(enemyTank, heroBomb)) {
+                                heroTank.bombs.remove(heroBomb);
+                                enemyTanks.remove(enemyTank);
 
-                                    Recorder.enemyNumDecrease();
-                                    Recorder.addScore();
-                                }
+                                Recorder.enemyNumDecrease();
+                                Recorder.addScore();
                             }
                         }
                     }
