@@ -320,7 +320,7 @@ class Bomb implements Runnable {
 }
 
 class Recorder {
-    private static int enemyNum = 3;
+    private static int enemyNum = 5;
     private static int heroLifeNum = 3;
     private static int score = 0;
 
